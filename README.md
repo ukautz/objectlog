@@ -26,6 +26,16 @@ log.Debug("[id: %s, name: %s, foo: %s]: Something happened", obj.ID(), obj.Name(
 obj.LogDebug("Something happened")
 ```
 
+## Install
+
+```bash
+# install standard
+go get github.com/ukautz/objectlog
+
+# install with logrus support
+go get github.com/ukautz/objectlog/...
+```
+
 ## Example
 
 A simple HTTP server, which uses a wrapped request object, which is decorated by logging. Check out [more examples](https://github.com/ukautz/objectlog/tree/master/examples), if you like.
