@@ -13,14 +13,16 @@ type (
 
 	// Requests showcases a wrapped *http.Request object with logging decoration
 	Request struct {
+
+		// decorated by ObjectLog
 		*objectlog.ObjectLog
+
+		// inherits request
 		*http.Request
+
+		// some arbitrary attribs
 		uuid string
 	}
-)
-
-var (
-	logger = objectlog.NewStandardLogger()
 )
 
 // newUUID is dummy for function which generates an ID per request for logging
@@ -38,12 +40,13 @@ func newRequest(req *http.Request) *Request {
 	uuid := newUUID()
 	prefix := fmt.Sprintf("(uuid: %s, from: %s, path: %s, method: %s) ", uuid, req.RemoteAddr, req.URL.Path, req.Method)
 	return &Request{
-		ObjectLog: objectlog.NewObjectLog(logger).SetLogPrefix(prefix),
+		ObjectLog: objectlog.NewObjectLog().SetLogPrefix(prefix),
 		Request:   req,
 		uuid:      uuid,
 	}
 }
 
+// newHandler is helper to generate method compatible with `http.HandleFunc` while using local `*Request` object
 func newHandler(cb func(rw http.ResponseWriter, req *Request)) func(http.ResponseWriter, *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		req2 := newRequest(req)
@@ -53,6 +56,7 @@ func newHandler(cb func(rw http.ResponseWriter, req *Request)) func(http.Respons
 	}
 }
 
+// main starts HTTP server, does some demo stuff and logs duration of every received request
 func main() {
 	fmt.Println("Starting")
 	fmt.Println("  Showcase object decoration by logging all HTTP requests")

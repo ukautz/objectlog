@@ -1,10 +1,34 @@
+![status](https://api.travis-ci.org/ukautz/objectlog.svg?branch=master)
+[![GoDoc](https://godoc.org/gopkg.in/github.com/ukautz/objectlog?status.svg)](http://godoc.org/github.com/ukautz/objectlog)
+
 # LogObject
 
-**TL;DR**: Injecting log capabilities to Go objects
+**TL;DR**: Decorates Go object with logging capabilities
 
 Writing logs is easy. Writing helpful logs is hard. This package provides a simple decoration for Go objects to make logging the right things easier.
 
+This package supports the built-in [log package](//golang.org/pkg/log/) as well as [Logrus](//github.com/Sirupsen/logrus) out of the box.
+Any other log implementation can be used as well, by writing an adapter which implements the [objectlog.ObjectLogger interface](https://godoc.org/github.com/ukautz/objectlog#ObjectLogger).
+
+## Code pitch
+
+```go
+// bad:
+// * clutters code
+// * tedious to write
+// * costly to change
+log.Debug("[id: %s, name: %s, foo: %s]: Something happened", obj.ID(), obj.Name(), obj.Foo())
+
+// good:
+// * clean code
+// * expressive
+// * easy to modify
+obj.LogDebug("Something happened")
+```
+
 ## Example
+
+A simple HTTP server, which uses a wrapped request object, which is decorated by logging. Check out [more examples](https://github.com/ukautz/objectlog/tree/master/examples), if you like.
 
 ```go
 package main
@@ -22,14 +46,16 @@ type (
 
 	// Requests showcases a wrapped *http.Request object with logging decoration
 	Request struct {
+
+		// decorated by ObjectLog
 		*objectlog.ObjectLog
+
+		// inherits request
 		*http.Request
+
+		// some arbitrary attribs
 		uuid string
 	}
-)
-
-var (
-	logger = objectlog.NewStandardLogger()
 )
 
 // newUUID is dummy for function which generates an ID per request for logging
@@ -47,12 +73,13 @@ func newRequest(req *http.Request) *Request {
 	uuid := newUUID()
 	prefix := fmt.Sprintf("(uuid: %s, from: %s, path: %s, method: %s) ", uuid, req.RemoteAddr, req.URL.Path, req.Method)
 	return &Request{
-		ObjectLog: objectlog.NewObjectLog(logger).SetLogPrefix(prefix),
+		ObjectLog: objectlog.NewObjectLog().SetLogPrefix(prefix),
 		Request:   req,
 		uuid:      uuid,
 	}
 }
 
+// newHandler is helper to generate method compatible with `http.HandleFunc` while using local `*Request` object
 func newHandler(cb func(rw http.ResponseWriter, req *Request)) func(http.ResponseWriter, *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		req2 := newRequest(req)
@@ -62,6 +89,7 @@ func newHandler(cb func(rw http.ResponseWriter, req *Request)) func(http.Respons
 	}
 }
 
+// main starts HTTP server, does some demo stuff and logs duration of every received request
 func main() {
 	fmt.Println("Starting")
 	fmt.Println("  Showcase object decoration by logging all HTTP requests")
@@ -79,9 +107,3 @@ func main() {
 	http.ListenAndServe(":8000", nil)
 }
 ```
-
-
-
-
-
-## Solution
