@@ -1,0 +1,7 @@
+package: github.com/ukautz/objectlog
+import: []
+testImport:
+- package: github.com/Sirupsen/logrus
+  version: ^0.11.0
+- package: github.com/stretchr/testify
+  version: ~1.1.4
